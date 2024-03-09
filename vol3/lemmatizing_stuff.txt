@@ -1,0 +1,25 @@
+Two main options, WordNet and SpaCy
+
+WordNet is better at catching esoteric words like oxen -> ox, but spaCy is more consistent with common words
+Neither option performs spell-checking, but misspelled words can be telling for sentiment anyway
+
+WordNet can only run on one word at a time
+
+    import nltk
+    from nltk.stem import WordNetLemmatizer
+    nltk.download('wordnet')
+    
+    wnl = WordNetLemmatizer()
+    lemmas = [wnl.lemmatize(word) for word in ['confounding','dog','walked','corpora','the','stores']]
+
+
+spaCy can be run on a full sequence, but said sequence must be tokenized first
+
+    import spacy
+    nlp = spacy.load('en_core_web_sm')
+    
+    text = "Corpora walked for miles when Janice's oxen tried to be better at hte dancing."
+    # Perform tokenization
+    doc = nlp(text)
+    # Select lemmas from tokenized string
+    lemmas = [token.lemma_ for token in doc]
