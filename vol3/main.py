@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # files to import
-# import data_cleaner
+import data_cleaner
 
 # define constants
 DATA_NAMES = ['twitter', 'yelp', 'imdb']
@@ -16,7 +16,7 @@ def get_dataset(filename):
 
 def clean_data_exists(filename):
     '''Check if cleaned data exists.'''
-    assert filename[-4] == ".pkl", f"Clean data will be saved using the .pkl extension; got {filename}"
+    assert filename[-4:] == ".pkl", f"Clean data will be saved using the .pkl extension; got {filename}"
     return os.path.isfile(filename)
 
 def save_clean_data(dataset, word_dictionary, file_prefix, dir = '', overwrite = False):
@@ -39,7 +39,8 @@ def save_clean_data(dataset, word_dictionary, file_prefix, dir = '', overwrite =
 
     # asserts
     assert file_prefix in DATA_NAMES, f"file_prefix must be one of {DATA_NAMES}; got {file_prefix}"
-    assert dir[-1] == '/', f"dir must end with '/'"
+    if len(dir) > 0:
+        assert dir[-1] == '/', f"dir must end with '/'"
 
     # handle if the file exists already
     file_name = dir + file_prefix + ".pkl"
@@ -56,6 +57,8 @@ def save_clean_data(dataset, word_dictionary, file_prefix, dir = '', overwrite =
     with open(file_name, 'wb') as f:
         pickle.dump(to_dump, f)
 
+    print(f"Saved cleaned data and corpus to {file_name}.")
+
 
 
 if __name__ == "__main__":
@@ -70,4 +73,31 @@ if __name__ == "__main__":
     5. Write Results
     """
 
-    print('TODO: data_cleaner.py and analysis.py are not yet implemented.')
+    # file names
+    fpath = '~/dat/school/acme/'
+    fnames = ['twitter']
+
+    for i, f in enumerate(fnames):
+
+        # check for clean data
+        clean_data_path = f + '.pkl'
+        no_clean_data = not clean_data_exists(clean_data_path)
+
+        # if it doesn't exists, clean the data. Otherwise continue to analysis
+        if no_clean_data:
+
+            # pull the dataset
+            data_filepath = fpath + f + "_data.csv"
+            df = get_dataset(data_filepath)
+
+            # DEBUG: get a small sample of the twitter dataset
+            df = df.sample(1000)
+
+            clean_df, corpus = data_cleaner.data_cleaner(df)
+            # DEBUG: we will overwrite while debugging. Ensure this is false in final runs
+            save_clean_data(clean_df, corpus, f, overwrite=True)
+
+        else:
+            print(f"Using cleaned data from {clean_data_path}")
+
+    # print('TODO: analysis.py is not yet implemented.')

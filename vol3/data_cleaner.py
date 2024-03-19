@@ -3,10 +3,14 @@ from io import StringIO
 from html.parser import HTMLParser
 import string
 import re
+import os
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from nltk.corpus import stopwords
-from nltk import download
-download('stopwords')
+
+# clean up terminal messages
+if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
+    from nltk import download
+    download('stopwords')
 
 # TODO: Correcting misspelled words
 #   Not feasible. For every single word, we would
@@ -63,7 +67,7 @@ def strip_tags(html):
 
 def data_cleaner(filthy_data, root='stem'):
     # Apply cleaning functions to the data
-    clean_data = filthy_data['text'].progress_apply(lambda x: remove_stopwords( # Remove stopwords and shorten to root words
+    clean_data = filthy_data['text'].apply(lambda x: remove_stopwords( # Remove stopwords and shorten to root words
                                                     tokenize(                   # Split message into a list
                                                     remove_punctuation(         # Remove punctuation and numbers
                                                     remove_users(               # Replace users
