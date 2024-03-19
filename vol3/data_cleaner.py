@@ -60,8 +60,6 @@ def remove_stopwords(text, root='stem'):
         wnl = WordNetLemmatizer()
         return [wnl.lemmatize(word) for word in text if word not in stopword_lst]
 
-
-
 # Apply cleaning functions to the data
 twitter_subset = twitter_df.sample(10000)
 clean_data = twitter_subset['text'].progress_apply(lambda x: remove_stopwords(   # Remove stopwords and shorten to root words
