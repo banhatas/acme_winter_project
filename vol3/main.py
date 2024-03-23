@@ -7,6 +7,7 @@ import pandas as pd
 
 # files to import
 import data_cleaner
+import analysis
 
 # define constants
 DATA_NAMES = ['twitter', 'yelp', 'imdb']
@@ -106,4 +107,12 @@ if __name__ == "__main__":
         else:
             print(f"Using cleaned data from {clean_data_path}")
 
-    # print('TODO: analysis.py is not yet implemented.')
+            # load the data
+            with open(clean_data_path, 'rb') as f:
+                data = pickle.load(f)
+
+            clean_df, corpus = data['data'], data['dictionary']
+
+        # do analysis
+        analysis.analysis(clean_df)
+        print(f"Finished with {clean_data_path}.\n\n")
