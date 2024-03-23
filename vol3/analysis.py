@@ -49,7 +49,8 @@ def analysis(clean_df):
     model = hmm.CategoricalHMM(n_components = n_states, random_state=66)
     model.fit(sequences, seq_lens)
 
-    print(f"Model Score: {np.exp(model.score(sequences, seq_lens)):.4f}")
+    print(f"Model AIC: {np.exp(model.score(sequences, seq_lens)):.4f}")
+    print(f"Model BIC: {model.bic(sequences, seq_lens)}")
 
     # get a list of predicted sequences
     predicted_seqs = []
