@@ -10,7 +10,7 @@ import data_cleaner
 
 # define constants
 DATA_NAMES = ['twitter', 'yelp', 'imdb']
-SUBSET_SIZE = 5000
+SUBSET_SIZE = 10000
 
 def get_dataset(filename):
     '''Get a dataset given a filename'''
