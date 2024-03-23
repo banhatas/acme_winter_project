@@ -1,4 +1,5 @@
 import os
+import time
 import pickle
 import warnings
 import numpy as np
@@ -9,6 +10,7 @@ import data_cleaner
 
 # define constants
 DATA_NAMES = ['twitter', 'yelp', 'imdb']
+SUBSET_SIZE = 5000
 
 def get_dataset(filename):
     '''Get a dataset given a filename'''
@@ -91,11 +93,15 @@ if __name__ == "__main__":
             df = get_dataset(data_filepath)
 
             # DEBUG: get a small sample of the twitter dataset
-            df = df.sample(1000)
+            df = df.sample(SUBSET_SIZE)
 
+            print(f"Cleaning data from {data_filepath}.")
+            start = time.time()
             clean_df, corpus = data_cleaner.data_cleaner(df)
             # DEBUG: we will overwrite while debugging. Ensure this is false in final runs
-            save_clean_data(clean_df, corpus, f, overwrite=True)
+            total_time = time.time() - start
+            save_clean_data(clean_df, corpus, f)
+            print(f"Took {total_time:.2f} seconds.\n")
 
         else:
             print(f"Using cleaned data from {clean_data_path}")
