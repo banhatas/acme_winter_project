@@ -83,6 +83,7 @@ def data_cleaner(filthy_data, root='stem'):
     #   that correspond to a given word
     seq_data = [[corpus.index(word) for word in message] for message in clean_data]
     # Format data as a DataFrame with the original target attached.
+    filthy_data = filthy_data.reset_index()
     clean_df = pd.DataFrame()
     clean_df['text'] = seq_data
     clean_df['target'] = filthy_data['target']

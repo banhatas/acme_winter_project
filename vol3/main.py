@@ -12,7 +12,7 @@ DATA_NAMES = ['twitter', 'yelp', 'imdb']
 
 def get_dataset(filename):
     '''Get a dataset given a filename'''
-    return pd.read_csv(filename)
+    return pd.read_csv(filename, index_col = 0)
 
 def clean_data_exists(filename):
     '''Check if cleaned data exists.'''
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # file names
     fpath = '~/dat/school/acme/'
-    fnames = ['twitter']
+    fnames = ['twitter', 'imdb', 'yelp']
 
     for i, f in enumerate(fnames):
 
