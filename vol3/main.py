@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
             print(f"Cleaning data from {data_filepath}.")
             start = time.time()
-            clean_df, corpus = data_cleaner.data_cleaner(df)
+            clean_df, corpus = data_cleaner.data_cleaner(df, root='lemmatize')
             # DEBUG: we will overwrite while debugging. Ensure this is false in final runs
             total_time = time.time() - start
             save_clean_data(clean_df, corpus, f)
