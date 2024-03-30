@@ -5,13 +5,15 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from tqdm import tqdm
+
 # files to import
 import data_cleaner
 import analysis
 
 # define constants
 DATA_NAMES = ['twitter', 'yelp', 'imdb']
-SUBSET_SIZE = 10000
+SUBSET_SIZE = 5000
 
 def get_dataset(filename):
     '''Get a dataset given a filename'''
@@ -55,12 +57,52 @@ def save_clean_data(dataset, word_dictionary, file_prefix, dir = '', overwrite =
     # save the data
     to_dump = {}
     to_dump['data'] = dataset
-    to_dump['dictionary'] = word_dictionary
+    if word_dictionary is not None:
+        to_dump['dictionary'] = word_dictionary
 
     with open(file_name, 'wb') as f:
         pickle.dump(to_dump, f)
 
     print(f"Saved cleaned data and corpus to {file_name}.")
+
+
+def gridSearch(df, n_clusters, vec_size):
+    '''Do a grid search on the pipeline.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        unclean data
+    n_clusters : list
+        list of n_clusters to try
+    vec_size : list
+        list of vec sizes to try
+    '''
+
+    loop = tqdm(total = len(n_clusters) * len(vec_size), leave=False, position=0)
+
+    # set up array of accuracies
+    mode_accs = np.zeros((len(n_clusters), len(vec_size)))
+    final_accs = np.zeros((len(n_clusters), len(vec_size)))
+
+    for i, nc in enumerate(n_clusters):
+        for j, vs in enumerate(vec_size):
+
+            # vectorize data
+            clean_df = data_cleaner.word2VecCleaner(df, vec_size = vs)
+
+            # cluster data
+            clustered_df = data_cleaner.cluster(clean_df, n_clusters=nc)
+
+            # get scores
+            acc_mode, acc_final = analysis.analysis(clustered_df, True)
+            mode_accs[i, j] = acc_mode
+            final_accs[i, j] = acc_final
+
+            # timer
+            loop.update()
+
+    return mode_accs, final_accs
 
 
 
@@ -83,36 +125,55 @@ if __name__ == "__main__":
     for i, f in enumerate(fnames):
 
         # check for clean data
-        clean_data_path = f + '.pkl'
-        no_clean_data = not clean_data_exists(clean_data_path)
+        # clean_data_path = f + '.pkl'
+        # no_clean_data = not clean_data_exists(clean_data_path)
 
-        # if it doesn't exists, clean the data. Otherwise continue to analysis
-        if no_clean_data:
+        # # if it doesn't exists, clean the data. Otherwise continue to analysis
+        # if no_clean_data:
 
-            # pull the dataset
-            data_filepath = fpath + f + "_data.csv"
-            df = get_dataset(data_filepath)
+        #     # pull the dataset
+        #     data_filepath = fpath + f + "_data.csv"
+        #     df = get_dataset(data_filepath)
 
-            # DEBUG: get a small sample of the twitter dataset
-            df = df.sample(SUBSET_SIZE)
+        #     # DEBUG: get a small sample of the twitter dataset
+        #     df = df.sample(SUBSET_SIZE)
 
-            print(f"Cleaning data from {data_filepath}.")
-            start = time.time()
-            clean_df, corpus = data_cleaner.data_cleaner(df, root='lemmatize')
-            # DEBUG: we will overwrite while debugging. Ensure this is false in final runs
-            total_time = time.time() - start
-            save_clean_data(clean_df, corpus, f)
-            print(f"Took {total_time:.2f} seconds.\n")
+        #     print(f"DATA CLEANING: Cleaning data from {data_filepath}.")
+        #     start = time.time()
+        #     clean_df = data_cleaner.word2VecCleaner(df)
+        #     clustered_df = data_cleaner.hdb_cluster(clean_df)
+        #     save_clean_data(clustered_df, None, f)
 
-        else:
-            print(f"Using cleaned data from {clean_data_path}")
+        # else:
+        #     print(f"DATA CLEANING: Using cleaned data from {clean_data_path}")
 
-            # load the data
-            with open(clean_data_path, 'rb') as f:
-                data = pickle.load(f)
+        #     # load the data
+        #     with open(clean_data_path, 'rb') as f:
+        #         data = pickle.load(f)
 
-            clean_df, corpus = data['data'], data['dictionary']
+        #     try:
+        #         clean_df, corpus = data['data'], data['dictionary']
+        #     except:
+        #         clean_df = data['data']
 
-        # do analysis
-        analysis.analysis(clean_df)
-        print(f"Finished with {clean_data_path}.\n\n")
+        # # do analysis
+        # analysis.analysis(clean_df)
+        # print(f"Finished with {clean_data_path}.\n\n")
+
+        # ====== grid search =======
+        data_filepath = fpath + f + '_data.csv'
+        df = get_dataset(data_filepath)
+
+        df = df.sample(SUBSET_SIZE)
+
+        # perform gridsearch
+        print(f"\nStarting grid search for {f} data\n")
+        cluster_list, vec_list = [5,10,50,100,300], [10, 25, 100, 200]
+        mode_accs, final_accs = gridSearch(df, cluster_list, vec_list)
+
+        # get best performing models
+        best_mode = np.max(mode_accs)
+        best_final = np.max(final_accs)
+
+        print(f"Best Accuracy from Mode Method:\t{best_mode:.4f}")
+        print(f"Best Accuracy from Final Method:\t{best_final:.4f}")

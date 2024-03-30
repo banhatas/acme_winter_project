@@ -17,7 +17,7 @@ def flatten_list(X):
     return sequences, seq_lens
 
 
-def analysis(clean_df):
+def analysis(clean_df, grid_search = False):
     """
     Initiates a Hidden Markov Model and fits it to the given data.
 
@@ -49,8 +49,9 @@ def analysis(clean_df):
     model = hmm.CategoricalHMM(n_components = n_states, random_state=66)
     model.fit(sequences, seq_lens)
 
-    print(f"Model AIC: {np.exp(model.score(sequences, seq_lens)):.4f}")
-    print(f"Model BIC: {model.bic(sequences, seq_lens)}")
+    if not grid_search:
+        print(f"Model AIC: {np.exp(model.score(sequences, seq_lens)):.4f}")
+        print(f"Model BIC: {model.bic(sequences, seq_lens)}")
 
     # get a list of predicted sequences
     predicted_seqs = []
@@ -77,8 +78,9 @@ def analysis(clean_df):
 
     acc_mode = np.mean(final_sentiment == y) * 100
     rdm_guess_percent = com_state / len(X) * 100.
-    print(f"Accuracy from Sequence Mode: {acc_mode:.2f}%")
-    print(f"Random Guesses: {rdm_guess_percent:.2f}%")
+    if not grid_search:
+        print(f"Accuracy from Sequence Mode: {acc_mode:.2f}%")
+        print(f"Random Guesses: {rdm_guess_percent:.2f}%")
 
     # predict the last state
     last_state = []
@@ -88,7 +90,11 @@ def analysis(clean_df):
 
 
     acc_final = np.mean(last_state == y) * 100.
-    print(f"Accuracy from Final State: {acc_final:.2f}%")
+    if not grid_search:
+        print(f"Accuracy from Final State: {acc_final:.2f}%")
+
+    if grid_search: 
+        return acc_mode, acc_final
 
     
 """

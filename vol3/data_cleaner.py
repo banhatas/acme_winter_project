@@ -1,11 +1,18 @@
-import pandas as pd
-from io import StringIO
-from html.parser import HTMLParser
-import string
 import re
 import os
-from nltk.stem import PorterStemmer, WordNetLemmatizer
+import sys
+import string
+import numpy as np
+import pandas as pd
+
+from tqdm import tqdm 
+from io import StringIO
+from hdbscan import HDBSCAN, prediction
 from nltk.corpus import stopwords
+from gensim.models import Word2Vec
+from sklearn.cluster import KMeans
+from html.parser import HTMLParser
+from nltk.stem import PorterStemmer, WordNetLemmatizer
 
 # clean up terminal messages
 if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
@@ -89,3 +96,127 @@ def data_cleaner(filthy_data, root='stem'):
     clean_df['target'] = filthy_data['target']
 
     return clean_df, corpus
+
+
+def cluster(vector_df, n_clusters=10):
+    '''Cluster the data using kmeans. In order to maintain the sequence order we will need to fit
+    on one set of (n, m) data, then cluster each vector by iterating through each vector in each
+    row of the dataset.
+    '''
+
+    # turn the data into one long set
+    arrays = vector_df['text'].to_list() # turns into a list of lists of arrays
+    dat = list()
+    for a in arrays:
+        dat += a
+    dat = np.array(dat)
+
+    # train the model
+    # print("DATA CLEANING: Training clustering model")
+    model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto') # TODO: add ability for hyperparameter search
+    model.fit(dat)
+
+    # transform the data
+    # print("DATA CLEANING: Clustering the data")
+    def get_cluster(seq):
+
+        if len(seq) == 0:
+            return np.array([])
+
+        clustered_seq = model.predict(np.array(seq)).astype(int)
+        return clustered_seq
+    
+    vector_df['text'] = vector_df['text'].apply(get_cluster)
+
+    # get rid of empty sequences
+    vector_df = vector_df.loc[vector_df['text'].apply(len) > 0]
+
+    # print("DATA CLEANING: Clustering finished")
+
+    return vector_df
+
+def hdb_cluster(vector_df, min_cluster_size=5):
+
+    # turn the data into one long set
+    arrays = vector_df['text'].to_list() # turns into a list of lists of arrays
+    dat = list()
+    for a in arrays:
+        dat += a
+    dat = np.array(dat)
+
+    # train the model
+    print("DATA CLEANING: Training clustering model")
+    model = HDBSCAN(min_cluster_size=5)
+    labels = model.fit_predict(dat)
+
+    # reshape the data
+    # TODO: agghhhhh
+
+    # transform the data
+    n_clusters = len(model.cluster_persistence_)
+    print(f"DATA CLEANING: Clustering the data on {n_clusters} clusters")
+    loop = tqdm(total=dat.size, position=0, leave=False)
+    def get_cluster(seq, labels):
+
+        sn = len(seq)
+
+        if sn == 0:
+            return np.array([])
+
+        clustered_seq = labels[:sn]
+        labels = labels[sn:]
+        return clustered_seq
+    
+    vector_df['text'] = vector_df['text'].apply(get_cluster)
+
+    # get rid of empty sequences
+    vector_df = vector_df.loc[vector_df['text'].apply(len) > 0]
+
+    return vector_df
+
+
+
+# make a word vectorization class
+def word2VecCleaner(filthy_data, root='stem', 
+                    vec_size=100, window=5, min_count=2):
+    """Clean the data and then use word2vec to transform into vectors.
+    Once vectors, run kmeans clustering.
+    """
+
+    # Apply cleaning functions to the data
+    clean_data = filthy_data['text'].apply(lambda x: remove_stopwords( # Remove stopwords and shorten to root words
+                                                    tokenize(                   # Split message into a list
+                                                    remove_punctuation(         # Remove punctuation and numbers
+                                                    remove_users(               # Replace users
+                                                    remove_urls(                # Replace URLs
+                                                    strip_tags(x)               # Remove HTML tags
+                                                    ))).lower()), root))
+    
+    # train the word2vec model
+    sentences = clean_data.to_list()
+    model = Word2Vec(sentences,
+                     vector_size=vec_size,
+                     window=window,
+                     min_count=min_count)
+    
+    # convert text to word2vec embeddings
+    def txt_embed(text):
+        sentence = list()
+        for word in text:
+            if word in model.wv:
+                sentence.append(model.wv[word])
+        return sentence
+    
+    # apply to data
+    clean_df = pd.DataFrame()
+    clean_df['text'] = clean_data
+    clean_df['text'] = clean_df['text'].apply(txt_embed)
+    clean_df['target'] = filthy_data['target']
+
+    return clean_df
+
+
+# DEBUGING
+if __name__ == "__main__":
+    
+    word2VecCleaner()
