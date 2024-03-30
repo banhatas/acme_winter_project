@@ -14,6 +14,13 @@ from sklearn.cluster import KMeans
 from html.parser import HTMLParser
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
+"""
+======= TODO: =======
+[ ] See about implementing a script to replace repeated characters to a max of 2
+    - use regex
+
+"""
+
 # clean up terminal messages
 if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
     from nltk import download
