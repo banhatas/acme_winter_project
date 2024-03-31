@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from tqdm import tqdm
+from tqdm import tqdm   
 
 # files to import
 import data_cleaner
@@ -119,8 +119,8 @@ if __name__ == "__main__":
     """
 
     # file names
-    fpath = '~/dat/school/acme/'
-    fnames = ['twitter', 'imdb', 'yelp']
+    fpath = ''
+    fnames = [ 'imdb', 'yelp']
 
     for i, f in enumerate(fnames):
 
@@ -144,23 +144,23 @@ if __name__ == "__main__":
             clustered_df = data_cleaner.cluster(clean_df, data_name=f)
             save_clean_data(clustered_df, None, f)
 
-        # else:
-        #     print(f"DATA CLEANING: Using cleaned data from {clean_data_path}")
+        else:
+            print(f"DATA CLEANING: Using cleaned data from {clean_data_path}")
 
-        #     # load the data
-        #     with open(clean_data_path, 'rb') as f:
-        #         data = pickle.load(f)
+            # load the data
+            with open(clean_data_path, 'rb') as f:
+                data = pickle.load(f)
 
-        #     try:
-        #         clean_df, corpus = data['data'], data['dictionary']
-        #     except:
-        #         clean_df = data['data']
+            try:
+                clean_df, corpus = data['data'], data['dictionary']
+            except:
+                clean_df = data['data']
 
-        # # do analysis
-        # analysis.analysis(clean_df)
-        # print(f"Finished with {clean_data_path}.\n\n")
+        # do analysis
+        analysis.analysis(clean_df)
+        print(f"Finished with {clean_data_path}.\n\n")
 
-        # ====== grid search =======
+        # # ====== grid search =======
         # data_filepath = fpath + f + '_data.csv'
         # df = get_dataset(data_filepath)
 

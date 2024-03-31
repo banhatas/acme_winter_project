@@ -12,6 +12,7 @@ from hdbscan import HDBSCAN, prediction
 from nltk.corpus import stopwords
 from gensim.models import Word2Vec
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 from html.parser import HTMLParser
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
@@ -107,7 +108,7 @@ def data_cleaner(filthy_data, root='stem'):
     return clean_df, corpus
 
 
-def cluster(vector_df, data_name, n_clusters=10):
+def cluster(vector_df, data_name, n_clusters=10, gauss=True):
     '''Cluster the data using kmeans. In order to maintain the sequence order we will need to fit
     on one set of (n, m) data, then cluster each vector by iterating through each vector in each
     row of the dataset.
@@ -117,16 +118,28 @@ def cluster(vector_df, data_name, n_clusters=10):
     arrays = vector_df['text'].to_list() # turns into a list of lists of arrays
     dat = list()
     for a in arrays:
-        dat += a
+        for vec in a:
+            dat.append(vec)
     dat = np.array(dat)
 
     # train the model
+    # TODO: try umap, pca, GMM anything but kmeans so we don't get flamed by the professors
     # print("DATA CLEANING: Training clustering model")
-    model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto') # TODO: add ability for hyperparameter search
-    model.fit(dat)
+        
+    if gauss:
+        model = GaussianMixture(n_components=n_clusters)
+        labels = model.fit_predict(dat)
+    else:
+        model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto') # TODO: add ability for hyperparameter search
+        model.fit(dat)
+        
+
 
     with open(data_name + "_cluster.pkl", 'wb') as f:
-        pickle.dump((dat, model.labels_), f)
+        if gauss:
+            pickle.dump((dat, labels), f)
+        else:
+            pickle.dump((dat, model.labels_), f)
 
     # transform the data
     # print("DATA CLEANING: Clustering the data")
@@ -185,7 +198,6 @@ def hdb_cluster(vector_df, min_cluster_size=5):
     vector_df = vector_df.loc[vector_df['text'].apply(len) > 0]
 
     return vector_df
-
 
 
 # make a word vectorization class
