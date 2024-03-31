@@ -125,24 +125,24 @@ if __name__ == "__main__":
     for i, f in enumerate(fnames):
 
         # check for clean data
-        # clean_data_path = f + '.pkl'
-        # no_clean_data = not clean_data_exists(clean_data_path)
+        clean_data_path = f + '.pkl'
+        no_clean_data = not clean_data_exists(clean_data_path)
 
-        # # if it doesn't exists, clean the data. Otherwise continue to analysis
-        # if no_clean_data:
+        # if it doesn't exists, clean the data. Otherwise continue to analysis
+        if no_clean_data:
 
-        #     # pull the dataset
-        #     data_filepath = fpath + f + "_data.csv"
-        #     df = get_dataset(data_filepath)
+            # pull the dataset
+            data_filepath = fpath + f + "_data.csv"
+            df = get_dataset(data_filepath)
 
-        #     # DEBUG: get a small sample of the twitter dataset
-        #     df = df.sample(SUBSET_SIZE)
+            # DEBUG: get a small sample of the twitter dataset
+            df = df.sample(SUBSET_SIZE)
 
-        #     print(f"DATA CLEANING: Cleaning data from {data_filepath}.")
-        #     start = time.time()
-        #     clean_df = data_cleaner.word2VecCleaner(df)
-        #     clustered_df = data_cleaner.hdb_cluster(clean_df)
-        #     save_clean_data(clustered_df, None, f)
+            print(f"DATA CLEANING: Cleaning data from {data_filepath}.")
+            start = time.time()
+            clean_df = data_cleaner.word2VecCleaner(df, data_name=f)
+            clustered_df = data_cleaner.cluster(clean_df, data_name=f)
+            save_clean_data(clustered_df, None, f)
 
         # else:
         #     print(f"DATA CLEANING: Using cleaned data from {clean_data_path}")
@@ -161,19 +161,19 @@ if __name__ == "__main__":
         # print(f"Finished with {clean_data_path}.\n\n")
 
         # ====== grid search =======
-        data_filepath = fpath + f + '_data.csv'
-        df = get_dataset(data_filepath)
+        # data_filepath = fpath + f + '_data.csv'
+        # df = get_dataset(data_filepath)
 
-        df = df.sample(SUBSET_SIZE)
+        # df = df.sample(SUBSET_SIZE)
 
-        # perform gridsearch
-        print(f"\nStarting grid search for {f} data\n")
-        cluster_list, vec_list = [5,10,50,100,300], [10, 25, 100, 200]
-        mode_accs, final_accs = gridSearch(df, cluster_list, vec_list)
+        # # perform gridsearch
+        # print(f"\nStarting grid search for {f} data\n")
+        # cluster_list, vec_list = [5,10,50,100,300], [10, 25, 100, 200]
+        # mode_accs, final_accs = gridSearch(df, cluster_list, vec_list)
 
-        # get best performing models
-        best_mode = np.max(mode_accs)
-        best_final = np.max(final_accs)
+        # # get best performing models
+        # best_mode = np.max(mode_accs)
+        # best_final = np.max(final_accs)
 
-        print(f"Best Accuracy from Mode Method:\t{best_mode:.4f}")
-        print(f"Best Accuracy from Final Method:\t{best_final:.4f}")
+        # print(f"Best Accuracy from Mode Method:\t{best_mode:.4f}")
+        # print(f"Best Accuracy from Final Method:\t{best_final:.4f}")

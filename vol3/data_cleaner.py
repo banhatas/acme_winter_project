@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import string
+import pickle
 import numpy as np
 import pandas as pd
 
@@ -36,6 +37,7 @@ if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
 # Also reduce words to the root word
 def remove_stopwords(text, root='stem'):
     stopword_lst = stopwords.words('english')
+    stopword_lst.append('')
     if root == 'stem':
         ps = PorterStemmer()
         return [word if (word == 'acmeuser') or (word == 'acmeurl') else ps.stem(word) for word in text if word not in stopword_lst]
@@ -105,7 +107,7 @@ def data_cleaner(filthy_data, root='stem'):
     return clean_df, corpus
 
 
-def cluster(vector_df, n_clusters=10):
+def cluster(vector_df, data_name, n_clusters=10):
     '''Cluster the data using kmeans. In order to maintain the sequence order we will need to fit
     on one set of (n, m) data, then cluster each vector by iterating through each vector in each
     row of the dataset.
@@ -122,6 +124,9 @@ def cluster(vector_df, n_clusters=10):
     # print("DATA CLEANING: Training clustering model")
     model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto') # TODO: add ability for hyperparameter search
     model.fit(dat)
+
+    with open(data_name + "_cluster.pkl", 'wb') as f:
+        pickle.dump((dat, model.labels_), f)
 
     # transform the data
     # print("DATA CLEANING: Clustering the data")
@@ -184,7 +189,7 @@ def hdb_cluster(vector_df, min_cluster_size=5):
 
 
 # make a word vectorization class
-def word2VecCleaner(filthy_data, root='stem', 
+def word2VecCleaner(filthy_data, data_name, root='stem',
                     vec_size=100, window=5, min_count=2):
     """Clean the data and then use word2vec to transform into vectors.
     Once vectors, run kmeans clustering.
@@ -205,6 +210,11 @@ def word2VecCleaner(filthy_data, root='stem',
                      vector_size=vec_size,
                      window=window,
                      min_count=min_count)
+    
+    # save the model
+    save_name = data_name + "_w2v.model"
+    model.save(save_name)
+    print(f"Word2Vec Model saved as {save_name}")
     
     # convert text to word2vec embeddings
     def txt_embed(text):
