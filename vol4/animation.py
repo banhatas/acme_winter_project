@@ -34,7 +34,7 @@ def JaAdLiTy_learns_to_walk(state, control, leg_length, endpoint):
 
     # Create the update function
     def update(t):
-        t = t%10
+        t = t//10
         # Define the angles from the control
         theta1 = control[0,t]
         theta2 = control[1,t]
@@ -49,10 +49,10 @@ def JaAdLiTy_learns_to_walk(state, control, leg_length, endpoint):
         C2 = (B2[0] + leg_length[1]*np.sin(phi2+theta2), B2[1] - leg_length[1]*np.cos(phi2+theta2))
 
         # Determine the slope of each part of the legs
-        slope_t1 = (B1[1] - A[1])/(B1[0] - A[0])
-        slope_t2 = (B2[1] - A[1])/(B2[0] - A[0])
-        slope_c1 = (C1[1] - B1[1])/(C1[0] - B1[0])
-        slope_c2 = (C2[1] - B2[1])/(C2[0] - B2[0])
+        slope_t1 = (B1[1] - A[1])/(B1[0] - A[0]) if (B1[0] - A[0]) != 0 else (B1[1] - A[1])
+        slope_t2 = (B2[1] - A[1])/(B2[0] - A[0]) if (B2[0] - A[0]) != 0 else (B2[1] - A[1])
+        slope_c1 = (C1[1] - B1[1])/(C1[0] - B1[0]) if (C1[0] - B1[0]) != 0 else (C1[1] - B1[1])
+        slope_c2 = (C2[1] - B2[1])/(C2[0] - B2[0]) if (C2[0] - B2[0]) != 0 else (C2[1] - B2[1])
 
         # Create equations for the lines of the legs
         t1 = lambda x: slope_t1*x + A[1] - slope_t1*A[0]
@@ -74,17 +74,17 @@ def JaAdLiTy_learns_to_walk(state, control, leg_length, endpoint):
         calf2.set_data(x_c2, c2(x_c2))
         mass.set_data(A[0],A[1])
 
-    ani = animation.FuncAnimation(fig, update, frames=T*100, interval=100)
+    ani = animation.FuncAnimation(fig, update, frames=(T-1)*100, interval=100)
     ani.save('JaAdLiTy_walks.mp4')
 
 if __name__ == '__main__':
     # Test case
-    state = np.array([[0,1,2,3,4,5,6,7,8,9],       # x values
+    state = np.array([[5,5,5,5,5,5,5,5,5,5],       # x values
                       [8,8,8,8,8,8,8,8,8,8]])      # y values
-    control = np.array([[np.pi/6, np.pi/4, np.pi/3, np.pi/2, 2*np.pi/3, 2*np.pi/3, np.pi/2, np.pi/3, np.pi/4, np.pi/6],     # theta1 values
-                        [2*np.pi/3, np.pi/2, np.pi/3, np.pi/4, np.pi/6, np.pi/6, np.pi/4, np.pi/3, np.pi/2, 2*np.pi/3],     # theta2 values
+    control = np.array([[-np.pi/2, -np.pi/3, -np.pi/4, -np.pi/6, 0, 0, np.pi/6, np.pi/4, np.pi/3, np.pi/2],     # theta1 values
+                        [np.pi/2, np.pi/3, np.pi/4, np.pi/6, 0, 0, -np.pi/6, -np.pi/4, -np.pi/3, -np.pi/2],     # theta2 values
                         [-2*np.pi/3, -np.pi/2, -np.pi/3, -np.pi/4, -np.pi/6, -np.pi/6, -np.pi/4, -np.pi/3, -np.pi/2, -2*np.pi/3],     # phi1 values
-                        [-np.pi/6, -np.pi/4, -np.pi/3, -np.pi/2, -2*np.pi/3, -2*np.pi/3, -np.pi/2, -np.pi/3, -np.pi/4, -np.pi/6]])    # phi2 values
+                        [0, -np.pi/6, -np.pi/4, -np.pi/3, -np.pi/2, -np.pi/2, -np.pi/3, -np.pi/4, -np.pi/6, 0]])    # phi2 values
     leg_length = (5,3)
     endpoint = 10
 
