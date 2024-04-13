@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pickle
 
 from hmmlearn import hmm
 
@@ -17,7 +18,7 @@ def flatten_list(X):
     return sequences, seq_lens
 
 
-def analysis(clean_df, grid_search = False):
+def analysis(clean_df, grid_search = False, save=False):
     """
     Initiates a Hidden Markov Model and fits it to the given data.
 
@@ -58,6 +59,12 @@ def analysis(clean_df, grid_search = False):
     for x in X:
         s = np.reshape(x, (-1,1))
         predicted_seqs.append(model.predict(s))
+
+    clean_df['hmm_data'] = predicted_seqs
+    with open("twitter_model_data.pkl", 'wb') as f:
+        pickle.dump(clean_df, f)
+        print(f'Saved model as {f}')
+
 
     # DEBUG: see lenght of most common state
     com_state = 0

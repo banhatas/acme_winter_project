@@ -119,8 +119,8 @@ if __name__ == "__main__":
     """
 
     # file names
-    fpath = ''
-    fnames = [ 'imdb', 'yelp']
+    fpath = '/home/tylerc/dat/school/acme/'
+    fnames = ['twitter']#, 'imdb', 'yelp']
 
     for i, f in enumerate(fnames):
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             print(f"DATA CLEANING: Cleaning data from {data_filepath}.")
             start = time.time()
             clean_df = data_cleaner.word2VecCleaner(df, data_name=f)
-            clustered_df = data_cleaner.cluster(clean_df, data_name=f)
+            clustered_df = data_cleaner.cluster(clean_df, data_name=f)#, gauss=False)
             save_clean_data(clustered_df, None, f)
 
         else:

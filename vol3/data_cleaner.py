@@ -1,6 +1,7 @@
 import re
 import os
 import sys
+import umap
 import string
 import pickle
 import numpy as np
@@ -112,51 +113,71 @@ def cluster(vector_df, data_name, n_clusters=10, gauss=True):
     '''Cluster the data using kmeans. In order to maintain the sequence order we will need to fit
     on one set of (n, m) data, then cluster each vector by iterating through each vector in each
     row of the dataset.
+
+    NOTES:
+    ======
+    - more neighbors seemed better
+    - cosine metric
     '''
+
+    # reset index
+    vector_df = vector_df.reset_index(drop=False, inplace=False, names='original_index')
 
     # turn the data into one long set
     arrays = vector_df['text'].to_list() # turns into a list of lists of arrays
     dat = list()
+    lens = list()
     for a in arrays:
         for vec in a:
             dat.append(vec)
+        lens.append(len(a))
     dat = np.array(dat)
 
-    # train the model
-    # TODO: try umap, pca, GMM anything but kmeans so we don't get flamed by the professors
-    # print("DATA CLEANING: Training clustering model")
-        
+    # training the model 
     if gauss:
+        # transform with umap, then fit with kmeans
+        reducer = umap.UMAP(metric='cosine', n_neighbors = 200)
+        dat = reducer.fit_transform(dat)
+
         model = GaussianMixture(n_components=n_clusters)
-        labels = model.fit_predict(dat)
-    else:
-        model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto') # TODO: add ability for hyperparameter search
         model.fit(dat)
-        
+    else:
+        # transform with umap, then fit with kmeans
+        reducer = umap.UMAP(metric='cosine', n_neighbors = 200)
+        dat = reducer.fit_transform(dat)
+
+        model = KMeans(n_clusters=n_clusters, random_state = 427, n_init='auto')
+        model.fit(dat)
 
 
-    with open(data_name + "_cluster.pkl", 'wb') as f:
-        if gauss:
-            pickle.dump((dat, labels), f)
-        else:
-            pickle.dump((dat, model.labels_), f)
+    # with open(data_name + "_cluster.pkl", 'wb') as f:
+    #     pickle.dump((dat, model.labels_), f)
 
     # transform the data
     # print("DATA CLEANING: Clustering the data")
-    def get_cluster(seq):
+    def get_cluster(row):
+
+        seq = row['text']
+        idx = row.name
 
         if len(seq) == 0:
             return np.array([])
+        
+        dat_idx_start = sum(lens[:idx])
+        dat_idx_end = dat_idx_start + lens[idx]
+        to_cluster = dat[dat_idx_start:dat_idx_end]
 
-        clustered_seq = model.predict(np.array(seq)).astype(int)
+        clustered_seq = model.predict(to_cluster).astype(int)
         return clustered_seq
     
-    vector_df['text'] = vector_df['text'].apply(get_cluster)
+    vector_df['text'] = vector_df.apply(get_cluster, axis=1)
 
     # get rid of empty sequences
     vector_df = vector_df.loc[vector_df['text'].apply(len) > 0]
 
     # print("DATA CLEANING: Clustering finished")
+
+    vector_df.set_index('original_index', inplace=True)
 
     return vector_df
 
@@ -202,7 +223,7 @@ def hdb_cluster(vector_df, min_cluster_size=5):
 
 # make a word vectorization class
 def word2VecCleaner(filthy_data, data_name, root='stem',
-                    vec_size=100, window=5, min_count=2):
+                    vec_size=500, window=5, min_count=2):
     """Clean the data and then use word2vec to transform into vectors.
     Once vectors, run kmeans clustering.
     """
