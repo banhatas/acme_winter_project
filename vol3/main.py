@@ -136,7 +136,7 @@ if __name__ == "__main__":
             df = get_dataset(data_filepath)
 
             # DEBUG: get a small sample of the twitter dataset
-            df = df.sample(SUBSET_SIZE)
+            df = df.sample(SUBSET_SIZE, replace=True)
 
             print(f"DATA CLEANING: Cleaning data from {data_filepath}.")
             start = time.time()

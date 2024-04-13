@@ -17,13 +17,6 @@ from sklearn.mixture import GaussianMixture
 from html.parser import HTMLParser
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
-"""
-======= TODO: =======
-[ ] See about implementing a script to replace repeated characters to a max of 2
-    - use regex
-
-"""
-
 # clean up terminal messages
 if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
     from nltk import download
@@ -38,6 +31,7 @@ if not os.path.exists(os.path.expanduser("~") + "/nltk_data/"):
 # Define stopwords and remove them from the list
 # Also reduce words to the root word
 def remove_stopwords(text, root='stem'):
+
     stopword_lst = stopwords.words('english')
     stopword_lst.append('')
     if root == 'stem':
@@ -229,7 +223,7 @@ def word2VecCleaner(filthy_data, data_name, root='stem',
     """
 
     # Apply cleaning functions to the data
-    clean_data = filthy_data['text'].apply(lambda x: remove_stopwords( # Remove stopwords and shorten to root words
+    filthy_data['cleaned'] = filthy_data['text'].apply(lambda x: remove_stopwords( # Remove stopwords and shorten to root words
                                                     tokenize(                   # Split message into a list
                                                     remove_punctuation(         # Remove punctuation and numbers
                                                     remove_users(               # Replace users
@@ -237,17 +231,15 @@ def word2VecCleaner(filthy_data, data_name, root='stem',
                                                     strip_tags(x)               # Remove HTML tags
                                                     ))).lower()), root))
     
+    with open("original_twitter_data.pkl", 'wb') as f:
+        pickle.dump(filthy_data, f)
+
     # train the word2vec model
-    sentences = clean_data.to_list()
+    sentences = filthy_data['cleaned'].to_list()
     model = Word2Vec(sentences,
                      vector_size=vec_size,
                      window=window,
                      min_count=min_count)
-    
-    # save the model
-    save_name = data_name + "_w2v.model"
-    model.save(save_name)
-    print(f"Word2Vec Model saved as {save_name}")
     
     # convert text to word2vec embeddings
     def txt_embed(text):
@@ -259,7 +251,7 @@ def word2VecCleaner(filthy_data, data_name, root='stem',
     
     # apply to data
     clean_df = pd.DataFrame()
-    clean_df['text'] = clean_data
+    clean_df['text'] = filthy_data['cleaned']
     clean_df['text'] = clean_df['text'].apply(txt_embed)
     clean_df['target'] = filthy_data['target']
 
