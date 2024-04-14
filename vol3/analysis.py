@@ -65,6 +65,9 @@ def analysis(clean_df, grid_search = False, save=False):
         pickle.dump(clean_df, f)
         print(f'Saved model as {f}')
 
+    with open("twitter_model.pkl", 'wb') as f:
+        pickle.dump(model, f)
+
 
     # DEBUG: see lenght of most common state
     com_state = 0
